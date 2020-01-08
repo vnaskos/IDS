@@ -21,7 +21,7 @@ spec:
         - name: INFLUX_DB_DATABASE
           value: influx_database
         - name: INFLUX_DB_MEASUREMENTS
-          value: oillevel,productnumber,stamperposition
+          value: temperature
         - name: MQTT_HOST
           value: mqtt-broker
         - name: MQTT_PORT
