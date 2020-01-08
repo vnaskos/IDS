@@ -1,0 +1,4 @@
+[submodule "trusted-connector"]
+	path = trusted-connector
+	url = https://github.com/industrial-data-space/trusted-connector.git
+	branch = develop
