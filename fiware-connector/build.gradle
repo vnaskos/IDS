@@ -1,0 +1,9 @@
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    version = "2.0"
+}

@@ -1,0 +1,6 @@
+server.port: 8080
+
+spring:
+  influx:
+    url: "http://${INFLUX_DB_HOST:localhost}:8086"
+    dbname: "dummysensordata"

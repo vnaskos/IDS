@@ -1,0 +1,5 @@
+rootProject.name = 'fiware-connector'
+
+include 'dummy-data-producer'
+include 'influx-orion-adapter'
+include 'generic-orion-consumer'

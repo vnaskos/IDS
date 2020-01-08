@@ -1,0 +1,9 @@
+server.port: 8081
+
+logging.level.org.springframework.web: TRACE
+
+spring.influx:
+    url: "http://${INFLUX_DB_HOST:localhost}:8086"
+    dbname: "dummysensordata"
+
+orion.host: "${ORION_HOST:localhost}"

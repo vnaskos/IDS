@@ -1,0 +1,105 @@
+version: '3'
+
+networks:
+  connector-network:
+    driver: bridge
+
+services:
+
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - "8083:8083"
+      - "8086:8086"
+      - "8090:8090"
+    env_file:
+      - 'env.influxdb'
+    volumes:
+      # Data persistency
+      # sudo mkdir -p ./data/influxdb
+      - ./data/influxdb:/var/lib/influxdb
+    networks:
+      connector-network:
+        aliases:
+          - influxdb
+
+
+  mongo:
+    image: mongo:3.6
+    command: --nojournal
+    networks:
+      - connector-network
+
+  orion:
+    image: fiware/orion
+    links:
+      - mongo
+    ports:
+      - "1026:1026"
+    command: -dbhost mongo
+    networks:
+      - connector-network
+    depends_on:
+      - mongo
+
+  fiware-sth-comet:
+    image: telefonicaiot/fiware-sth-comet
+    links:
+      - mongo-comet
+    ports:
+      - "8666:8666"
+    environment:
+      - STH_HOST=0.0.0.0
+      - DB_URI=mongo:27017
+      - LOGOPS_LEVEL=DEBUG
+    networks:
+      connector-network:
+        aliases:
+          - fiware-sth-comet
+
+  mongo-comet:
+    image: mongo:3.6
+    command: --nojournal
+    networks:
+      - connector-network
+
+
+  dummy-data-producer:
+    image: vnaskos-ids-connector/dummy-data-producer:latest
+    ports:
+      - '8080:8080'
+    environment:
+      - INFLUX_DB_HOST=influxdb
+    networks:
+      - connector-network
+    depends_on:
+      - influxdb
+
+  influx-orion-adpater:
+    image: vnaskos-ids-connector/influx-orion-adapter:latest
+    ports:
+      - '8081:8081'
+    environment:
+      - INFLUX_DB_HOST=influxdb
+      - ORION_HOST=orion
+    networks:
+      connector-network:
+        aliases:
+          - influx-orion-adpater
+    depends_on:
+      - influxdb
+      - orion
+
+  generic-orion-consumer:
+    image: vnaskos-ids-connector/generic-orion-consumer:latest
+    ports:
+      - '8082:8082'
+    environment:
+      - ORION_HOST=orion
+    networks:
+      connector-network:
+        aliases:
+          - generic-orion-consumer
+    depends_on:
+      - orion
