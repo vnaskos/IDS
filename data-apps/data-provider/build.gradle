@@ -1,0 +1,35 @@
+plugins {
+    id "java"
+    id "org.springframework.boot" version "2.1.2.RELEASE"
+    id "io.spring.dependency-management" version "1.0.7.RELEASE"
+    id "com.palantir.docker" version "0.21.0"
+}
+
+group 'com.vnaskos.ids'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(":influxdb-adapter")
+
+    implementation group: "org.springframework.boot", name: "spring-boot-configuration-processor"
+    implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
+    implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-netflix-eureka-client', version: '2.1.2.RELEASE'
+
+    implementation group: 'org.springframework.integration', name: 'spring-integration-mqtt', version: '5.1.5.RELEASE'
+
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.0.0'
+}
+
+docker {
+    name "vnaskos-trusted-ids-connector/${project.name}"
+    files bootJar.archiveFile.get()
+    buildArgs(['JAR_FILE': "${bootJar.archiveFileName.get()}"])
+}
+tasks.docker.dependsOn {build}

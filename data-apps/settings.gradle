@@ -1,0 +1,3 @@
+rootProject.name = 'vnaskos-ids-data-apps'
+include ':data-provider'
+include ':influxdb-adapter'

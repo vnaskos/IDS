@@ -1,0 +1,40 @@
+plugins {
+    id "java"
+}
+
+group "com.vnaskos.ids"
+version "1.0-SNAPSHOT"
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file("src/integration-test/java")
+        }
+        resources.srcDir file("src/integration-test/resources")
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+dependencies {
+    implementation group: "org.influxdb", name: "influxdb-java", version: "2.15"
+
+    testImplementation group: "junit", name: "junit", version: "4.12"
+    testImplementation group: "org.assertj", name: "assertj-core", version: "3.12.2"
+}
+
+task integrationTest(type: Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+}
