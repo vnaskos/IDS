@@ -1,0 +1,82 @@
+version: '2'
+services:
+
+  # TPM simulator
+  ids-tpmsim-provider:
+    image: fraunhoferaisec/tpmsim:develop
+    build:
+      context: '../../trusted-connector/examples/tpmsim'
+    volumes:
+      # Always extract a "clean state" for our TPM simulator to prevent DA lockout issues
+      - ../../trusted-connector/examples/tpmsim/tpmsim_data.tar:/tpmsim_data.tar
+    networks:
+      - provider-internal
+
+  # The core platform, mounts docker control socket and route definition into the image
+  provider-core:
+    image: fraunhoferaisec/trusted-connector-core:develop
+    build:
+      context: '../../trusted-connector/karaf-assembly'
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./provider-log/:/root/log/
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./system.properties:/root/etc/system.properties
+      - ../../trusted-connector/examples/tpmsim/rootCA.crt:/root/etc/rootca-cert.pem
+      - ./provider-keystore.p12:/root/etc/provider-keystore.p12
+      - ./truststore.p12:/root/etc/truststore.p12
+      - ./example-provider-routes.xml:/root/deploy/example-provider-routes.xml
+    environment:
+      - TPM_HOST=ids-tpmsim-provider
+    # Enable this lines for debugging or UI access from localhost
+    ports:
+      - "5006:5005"
+      - "8282:8181"
+    networks:
+      - ids-wide
+      - provider-internal
+
+  # Mosquitto MQTT broker
+  mqtt-broker-provider:
+    container_name: mqtt-broker-provider
+    image: eclipse-mosquitto:latest
+    ports:
+      - "1883:1883"
+    networks:
+      - provider-internal
+  
+  provider-data-app:
+    image: vnaskos-trusted-ids-connector/data-provider
+    environment:
+      - MQTT_HOST=mqtt-broker-provider
+      - MQTT_PORT=1883
+      - MQTT_TOPIC=topic/default
+      - INFLUX_DB_HOST=influxdb
+      - INFLUX_DB_PORT=8086
+      - INFLUX_DB_MEASUREMENTS=temperature
+      - INFLUX_DB_DATABASE=influx_database
+      - FETCH_DATA_EVERY=20
+      - EUREKA_URI=http://service-registrar:8761/eureka/
+    ports:
+      - "8082:8082"
+    networks:
+      - provider-internal
+  
+  influxdb:
+    image: influxdb:latest
+    ports:
+      - "8083:8083"
+      - "8086:8086"
+      - "8090:8090"
+    environment:
+      - INFLUXDB_DATA_ENGINE=tsm1
+      - INFLUXDB_REPORTING_DISABLED=false
+    volumes:
+      - ./data/influxdb:/var/lib/influxdb
+
+networks:
+  ids-wide:
+    driver: bridge
+  provider-internal:
+    driver: bridge
